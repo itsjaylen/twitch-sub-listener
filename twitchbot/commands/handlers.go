@@ -44,15 +44,25 @@ func InitCommands(db *gorm.DB) {
 	
 			fmt.Printf("[DEBUG] targetUser: %q\n", targetUser)
 	
-			sus, err := CheckUserSuspicion(db, targetUser)
+			sub, sus, err := CheckUserSuspicion(db, targetUser)
 			if err != nil {
 				client.Say(msg.Channel, fmt.Sprintf("Could not find suspicion data for %s.", targetUser))
 				return
 			}
 	
-			client.Say(msg.Channel, fmt.Sprintf("Suspicion level for %s: %s", targetUser, sus))
+			formattedFollow := utils.FormatDuration(sub.FollowDuration)
+	
+			client.Say(msg.Channel, fmt.Sprintf(
+				"Suspicion for %s: %s | SubType: %s | Months: %d | Followed: %s ago",
+				targetUser,
+				sus,
+				sub.SubType,
+				sub.CumulativeMonths,
+				formattedFollow,
+			))
 		},
 	})
+	
 	
 	
 }
