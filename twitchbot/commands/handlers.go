@@ -31,14 +31,20 @@ func InitCommands(db *gorm.DB) {
 		Name:        "!check",
 		Description: "Check suspicion for a user in this channel",
 		Handler: func(client *twitch.Client, msg twitch.PrivateMessage) {
+			fmt.Printf("[DEBUG] Raw message: %q\n", msg.Message)
+	
 			targetUser := msg.User.Name
 	
-			parts := strings.Fields(msg.Message)
-			if len(parts) > 1 {
-				targetUser = strings.ToLower(parts[1]) 
+			rawArgs := strings.TrimSpace(msg.Message[len("!check"):])
+			fmt.Printf("[DEBUG] rawArgs after trimming: %q\n", rawArgs)
+	
+			if rawArgs != "" {
+				targetUser = strings.ToLower(strings.Fields(rawArgs)[0])
 			}
 	
-			sus, err := CheckUserSuspicion(db, targetUser, msg.Channel)
+			fmt.Printf("[DEBUG] targetUser: %q\n", targetUser)
+	
+			sus, err := CheckUserSuspicion(db, targetUser)
 			if err != nil {
 				client.Say(msg.Channel, fmt.Sprintf("Could not find suspicion data for %s.", targetUser))
 				return
@@ -47,5 +53,6 @@ func InitCommands(db *gorm.DB) {
 			client.Say(msg.Channel, fmt.Sprintf("Suspicion level for %s: %s", targetUser, sus))
 		},
 	})
+	
 	
 }

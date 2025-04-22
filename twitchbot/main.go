@@ -1,15 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
-	"fmt"
 
+	"twitchsublistener/commands"
 	"twitchsublistener/models"
 	"twitchsublistener/utils"
-	"twitchsublistener/commands"
 
 	twitch "github.com/gempir/go-twitch-irc/v4"
 )
@@ -21,9 +22,15 @@ var (
 	msgQueue   = make(chan func(), 100)
 	startTime  = time.Now()
 )
-
 func handleCommand(client *twitch.Client, msg twitch.PrivateMessage) {
-	if cmd, ok := commands.Registry[msg.Message]; ok {
+	fields := strings.Fields(msg.Message)
+	if len(fields) == 0 {
+		return
+	}
+
+	cmdName := fields[0]
+	cmd, exists := commands.Registry[cmdName]
+	if exists {
 		cmd.Handler(client, msg)
 	}
 }
