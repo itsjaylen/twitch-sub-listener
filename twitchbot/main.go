@@ -21,7 +21,9 @@ var (
 	oauthToken = os.Getenv("TWITCH_OAUTH")
 	msgQueue   = make(chan func(), 100)
 	startTime  = time.Now()
+	disableChatOutput = os.Getenv("DISABLE_CHAT_OUTPUT") == "true"
 )
+
 func handleCommand(client *twitch.Client, msg twitch.PrivateMessage) {
 	fields := strings.Fields(msg.Message)
 	if len(fields) == 0 {
@@ -127,7 +129,9 @@ func processSubscription(db *utils.DB, client *twitch.Client, msg twitch.UserNot
 			user, channel, months, subType, followStr, susScore)
 	}
 
-	msgQueue <- func() { client.Say(botChannel, chatMsg) }
+	if !disableChatOutput {
+		msgQueue <- func() { client.Say(botChannel, chatMsg) }
+	}
 }
 
 func msgSender(client *twitch.Client) {
