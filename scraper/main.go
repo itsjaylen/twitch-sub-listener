@@ -28,7 +28,6 @@ var (
 )
 
 func main() {
-	// Parse flags
 	scrapeFlag := flag.Bool("scrape", false, "Scrape logs from server")
 	readFlag := flag.Bool("read", false, "Read logs from files")
 	flag.Parse()
@@ -38,23 +37,20 @@ func main() {
 	month := int(now.Month())
 	today := now.Day()
 
-	subRegex := regexp.MustCompile(`(?i)subscribed with (Prime|Tier \d)|subscribed for \d+ months`)
-	primeRegex := regexp.MustCompile(`(?i)subscribed with Prime`)
-	tier1Regex := regexp.MustCompile(`(?i)subscribed with Tier 1`)
-	tier2Regex := regexp.MustCompile(`(?i)subscribed with Tier 2`)
-	tier3Regex := regexp.MustCompile(`(?i)subscribed with Tier 3`)
+	subRegex := regexp.MustCompile(`(?i)subscribed (with|at) (Prime|Tier \d)|subscribed for \d+ months`)
+	primeRegex := regexp.MustCompile(`(?i)subscribed (with|at) Prime`)
+	tier1Regex := regexp.MustCompile(`(?i)subscribed (with|at) Tier 1`)
+	tier2Regex := regexp.MustCompile(`(?i)subscribed (with|at) Tier 2`)
+	tier3Regex := regexp.MustCompile(`(?i)subscribed (with|at) Tier 3`)
 
-	// Create logs dir if not exist
+
 	os.Mkdir("./logs", 0755)
 
 	if *scrapeFlag {
-		// Just scrape
 		scrapeLogs(year, month, today, subRegex, primeRegex, tier1Regex, tier2Regex, tier3Regex)
 	} else if *readFlag {
-		// Just read
 		readLogs(year, month, today, subRegex, primeRegex, tier1Regex, tier2Regex, tier3Regex)
 	} else {
-		// Neither flag given: try reading logs, if no logs exist then scrape then read
 		if logsExist(year, month, today) {
 			readLogs(year, month, today, subRegex, primeRegex, tier1Regex, tier2Regex, tier3Regex)
 		} else {
@@ -63,7 +59,6 @@ func main() {
 		}
 	}
 
-	// Final summary
 	log.Println("✅ Done processing logs for the month.")
 	log.Printf("📊 Total Subscriptions: %d\n", totalSubs)
 	log.Printf("   🔹 Prime Subs: %d\n", primeSubs)
@@ -124,8 +119,10 @@ func readLogs(year, month, today int, subRegex, primeRegex, tier1Regex, tier2Reg
 				} else if tier1Regex.MatchString(line) {
 					tier1++
 				} else if tier2Regex.MatchString(line) {
+					fmt.Println(line)
 					tier2++
 				} else if tier3Regex.MatchString(line) {
+					fmt.Println(line)
 					tier3++
 				}
 			}
