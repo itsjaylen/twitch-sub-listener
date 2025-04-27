@@ -22,6 +22,7 @@ var (
 	msgQueue   = make(chan func(), 100)
 	startTime  = time.Now()
 	disableChatOutput = os.Getenv("DISABLE_CHAT_OUTPUT") == "true"
+	lastBotMessageTime time.Time
 )
 
 func handleCommand(client *twitch.Client, msg twitch.PrivateMessage) {
@@ -135,8 +136,23 @@ func processSubscription(db *utils.DB, client *twitch.Client, msg twitch.UserNot
 }
 
 func msgSender(client *twitch.Client) {
-	for f := range msgQueue {
-		f()
-		time.Sleep(1500 * time.Millisecond)
+	lastBotMessageTime = time.Now()
+
+	ticker := time.NewTicker(270 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case f := <-msgQueue:
+			f()
+			lastBotMessageTime = time.Now()
+			time.Sleep(1500 * time.Millisecond)
+
+		case <-ticker.C:
+			// Only send $rafk if a message has been sent before
+			if time.Since(lastBotMessageTime) < 270*time.Second {
+				client.Say(botChannel, "$rafk")
+			}
+		}
 	}
 }

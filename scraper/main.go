@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"sync"
 	"time"
+	"github.com/wcharczuk/go-chart/v2"
 )
 
 const (
@@ -65,6 +66,7 @@ func main() {
 	log.Printf("   🔸 Tier 1 Subs: %d\n", tier1Subs)
 	log.Printf("   🟠 Tier 2 Subs: %d\n", tier2Subs)
 	log.Printf("   🔴 Tier 3 Subs: %d\n", tier3Subs)
+	generateBarChart(primeSubs, tier1Subs, tier2Subs, tier3Subs)
 }
 
 func logsExist(year, month, today int) bool {
@@ -81,7 +83,7 @@ func scrapeLogs(year, month, today int, subRegex, primeRegex, tier1Regex, tier2R
 	days := make(chan int, today)
 	var wg sync.WaitGroup
 
-	for i := 0; i < maxWorkers; i++ {
+	for i := range maxWorkers {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
@@ -216,4 +218,30 @@ func processDay(workerID, year, month, day int, subRegex, primeRegex, tier1Regex
 
 	log.Printf("[%02d] Finished %s — Subs found: %d (Prime: %d, T1: %d, T2: %d, T3: %d)",
 		workerID, dateStr, subs, prime, tier1, tier2, tier3)
+}
+
+func generateBarChart(prime, t1, t2, t3 int) {
+	graph := chart.BarChart{
+		Title: "Subscription Breakdown",
+		Height: 512,
+		BarWidth: 60,
+		Bars: []chart.Value{
+			{Value: float64(prime), Label: "Prime"},
+			{Value: float64(t1), Label: "Tier 1"},
+			{Value: float64(t2), Label: "Tier 2"},
+			{Value: float64(t3), Label: "Tier 3"},
+		},
+	}
+
+	f, err := os.Create("sub_chart.png")
+	if err != nil {
+		log.Fatalf("Error creating chart file: %v", err)
+	}
+	defer f.Close()
+
+	err = graph.Render(chart.PNG, f)
+	if err != nil {
+		log.Fatalf("Error rendering chart: %v", err)
+	}
+	log.Println("📈 Chart saved as sub_chart.png")
 }
